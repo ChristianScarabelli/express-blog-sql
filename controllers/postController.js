@@ -21,28 +21,21 @@ const index = (req, res) => {
 
 // funzione rotta show => visualizzare un elemento 
 const show = (req, res) => {
-    const param = req.params.id // salvo in una variabile il parametro, che può essere sia ID che slug
 
-    console.log(`Ecco il post con parametro: ${param}`)
+    // recupero l'id dalla request
+    const id = req.params.id
 
-    let post      // inizializzo una variabile che cambierà e verrà ritornata in json in base alla ricerca
+    // creo la query con il parametro ?, che verrà definito dopo, per evitare mysql injection
+    const sql = `SELECT * FROM posts WHERE id = ?`
 
-    const id = parseInt(param); // Converto il parametro in un numero
-
-    if (!isNaN(id) && id > 0) {    // se il parametro scritto è un numero valido cerco per id
-        post = posts.find((post) => post.id === id)  // cerco nell'array posts l'elemento post con ID uguale a quello della richiesta con query string
-    } else {      // altrimenti cerco per lo slug inserito
-        post = posts.find((post) => post.slug === param)
-    }
-
-    if (!post) { // Se il post non è stato trovato
-        return res.status(404).json({
-            error: 'Post not found',
-            message: 'Il post non è stato trovato',
-        })
-    }
-
-    res.json(post)    // ritorno un json con l'elemento post selezionato per id o per slug, altrimenti ritorno l'errore
+    // uso la query
+    connection.query(sql, [id], (err, results) => {
+        if (err) return res.status(500).json({ error: 'Database query failed' })
+        if (results.length === 0) return res.status(404).json({ error: 'Post not found' })
+        // ritorno un json con il post selezionato per id, 
+        // che corrisponde al primo elemento dell'array, quindi all'elemento con indice 0 
+        res.json(results[0])
+    })
 }
 
 // funzione rotta store => creare un nuovo elemento
