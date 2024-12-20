@@ -1,35 +1,22 @@
+const connection = require('../data/db.js')
 
+const posts = require('../data/posts.js')    // richiamo l'array di oggetti della risorsa post quì dove si svolgono le funzioni
 let lastIndex = posts.at(-1).id        // variabile globale che racchiude l'id dell'ultimo elemento dell'array posts
 
 // funzione rotta Index => visualizzare tutti gli elementi
 const index = (req, res) => {
     console.log('elenco dei post')
 
-    let filteredPosts = posts
+    // la query
+    const sql = `SELECT * FROM posts`
 
-    // filtro i posts con il valore tag che viene passato in query string
-    if (req.query.tags) {
-        const queryTags = req.query.tags.toLowerCase().split(',')  // metto il valore in minuscolo e separato dagli altri elementi dell'array in una variabile
-        filteredPosts = filteredPosts.filter(post =>    // verifico se almeno uno dei tag della query è presente nei tag del post
-            post.tags.some(tag => queryTags.includes(tag.toLowerCase()))
-        )
-    }
+    // uso la query con connection(connessione al db), con la funzione query(), 
+    // che accetta la query creata e una callback per gestire risposta ed errore, ed eventuale parametro dinamico (come l'id)
+    connection.query(sql, (err, results) => {
+        if (err) return res.status(500).json({ error: 'database query failed' })   // si usa return oppure else if per le altre condizioni
+        res.json(results)     // rispondo con un json che contiene l'elenco intero
+    })
 
-    // limito i post da vedere in elenco
-    const limit = parseInt(req.query.limit)  // inserisco in una variabile il valore della query limit e lo trasformo in un numero
-    if (limit && !isNaN(limit) && limit >= 0) {  // se quel numero è compreso in elenco ed è >= 0, taglio l'array dei post dall'indice 0 al numero limi inserito in query string
-        filteredPosts = filteredPosts.slice(0, limit)
-    }
-
-    // se il post non esiste (quindi l'elenco dopo i filtri è vuoto), ritorno l'errore
-    if (filteredPosts.length === 0) {
-        res.status(404).json({
-            error: 'Post not found',
-            message: 'Il post non è stato trovato'
-        })
-    }
-
-    res.json(filteredPosts)     // rispondo con un json che contiene l'elenco intero, o se si entra nell'if, quello filtrato
 }
 
 // funzione rotta show => visualizzare un elemento 
