@@ -2,7 +2,6 @@
 
 const express = require('express')      // richiamo express
 const postsRouter = require('./routers/postRouter.js')      // importo il router delle rotte della risorsa posts
-const CategoriesRouter = require('./routers/categoriesRouter.js')
 const errorsHandler = require('./middlewares/errorsHandler.js')  // importo il middleware di gestione degli errori
 const notFound = require('./middlewares/notFound.js')  // importo il middleware di gestione errore 404
 const trimStrings = require('./middlewares/trimStrings.js')
@@ -30,9 +29,6 @@ app.get('/', (req, res) => {
 
 // utilizzo le rotte della risorsa posts e inizializzo il prefisso /posts per tutte le rotte
 app.use('/posts', postsRouter)
-
-// utilizzo la rotte delle categorie e inizializzo il prefisso /categories per tutte le rotte
-app.use('/categories', CategoriesRouter)
 
 // uso il middleware di errore globalmente e dopo tutte le rotte
 app.use(errorsHandler)
