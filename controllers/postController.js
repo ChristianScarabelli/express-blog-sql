@@ -25,16 +25,35 @@ const show = (req, res) => {
     // recupero l'id dalla request
     const id = req.params.id
 
-    // creo la query con il parametro ?, che verrà definito dopo, per evitare mysql injection
-    const sql = `SELECT * FROM posts WHERE id = ?`
+    // creo la query per il post con il parametro ?, che verrà definito dopo, per evitare mysql injection
+    const postSql = `SELECT * FROM posts WHERE id = ?`
 
-    // uso la query
-    connection.query(sql, [id], (err, results) => {
+    // creo la query per i tags
+    const tagsSql = `SELECT t.* 
+                    FROM tags AS t
+                    JOIN post_tag AS p_t
+                    ON t.id = p_t.tag_id
+                    WHERE p_t.post_id = ?`
+
+    // uso la query per trovare il post
+    connection.query(postSql, [id], (err, postResult) => {
         if (err) return res.status(500).json({ error: 'Database query failed' })
-        if (results.length === 0) return res.status(404).json({ error: 'Post not found' })
-        // ritorno un json con il post selezionato per id, 
-        // che corrisponde al primo elemento dell'array, quindi all'elemento con indice 0 
-        res.json(results[0])
+        if (postResult.length === 0) return res.status(404).json({ error: 'Post not found' })
+
+        // salvo il post trovato per id in una variabile,
+        // che corrisponde al primo elemento dell'array, quindi all'elemento con indice 0
+        const post = postResult[0]
+
+        // annido (perchè sono asincrone) la query per cercare i tags
+        connection.query(tagsSql, [id], (err, tagsResult) => {
+            if (err) return res.status(500).json({ error: 'Database query failed' })
+
+            // se l'esito è positivo, associo i tags trovati alla prorpiretà tags dell'oggetto post
+            post.tags = tagsResult
+
+            // ritorno il json con il post
+            res.json(post)
+        })
     })
 }
 
