@@ -7,7 +7,7 @@ let lastIndex = posts.at(-1).id        // variabile globale che racchiude l'id d
 const index = (req, res) => {
     console.log('elenco dei post')
 
-    // la query
+    // creo la query
     const sql = `SELECT * FROM posts`
 
     // uso la query con connection(connessione al db), con la funzione query(), 
@@ -103,33 +103,19 @@ const modify = (req, res) => {
 
 // funzione rotta destroy => eliminare un elemento
 const destroy = (req, res) => {
-    const param = req.params.id     // il parametro può essere un ID o uno slug
-    const id = parseInt(param)      // converto il parametro in un numero e lo salvo nella variabile id
 
-    let postIndex
+    // recupero il parametro dal url
+    const { id } = req.params
 
-    if (!isNaN(id) && id > 0) {     // se l'id è un numero valido e >0,  recupero nella variabile l'indice dell'id corrispondente al post
-        postIndex = posts.findIndex((post) => post.id === id)
-    } else {
-        postIndex = posts.findIndex((post) => post.slug === param) // altrimenti guardo se il parametro inserito è === allo slug
-    }
+    // creo la query con il parametro ?, che verrà definito dopo, per evitare mysql injection
+    const sql = `DELETE FROM posts WHERE id = ?`
 
-    // se l'indice non è compreso imposto l'errore
-    if (postIndex === -1) {
-        res.status(404)
-
-        return res.json({
-            error: 'Post not found',
-            message: 'post selected not found',
-        })
-    }
-
-    // rimuovo il post selezionato in base al parametro (id o slug)
-    posts.splice(postIndex, 1)
-
-    console.log(posts) // post rimanenti dopo l'eliminazione
-
-    res.sendStatus(204) // rispondo con esito positivo ma senza contenuto
+    // uso la query 
+    connection.query(sql, [id], (err) => {
+        if (err) return res.status(500).json({ error: 'Failed to delete post' })
+        // rispondo con esito positivo ma senza contenuto
+        res.sendStatus(204)
+    })
 }
 
 module.exports = { index, show, store, update, modify, destroy }
